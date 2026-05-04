@@ -15,6 +15,9 @@ beacon boot
 
 # Report test results
 beacon report --title "Test Results" --body results.txt
+
+# Upload logs folder
+beacon upload /var/log/sev-performance
 ```
 
 ## Core Features
@@ -22,6 +25,7 @@ beacon report --title "Test Results" --body results.txt
 - **Service Discovery**: Automatically finds `dispatch` servers via mDNS
 - **Boot Notification**: Signals workload start to orchestrator
 - **Result Reporting**: Submits test results for GitHub issue creation
+- **Folder Upload**: Uploads zipped folders to the dispatch server
 
 ## Commands
 
@@ -46,6 +50,29 @@ beacon report --title "Test Results" --body results.txt
 # Report with body from stdin
 echo "All tests passed!" | beacon report --title "Success" --label bug --assignee npmccallum
 ```
+
+### `beacon upload`
+
+Uploads a folder as a zip archive to `dispatch`:
+
+```bash
+# Upload folder (archive name defaults to folder-name.zip)
+beacon upload /var/log/test-results
+
+# Upload with custom archive name
+beacon upload /var/log/test-results --name results-2024.zip
+```
+
+The folder is compressed using deflate and sent via HTTP PATCH with:
+- `Content-Type: application/zip`
+- `X-Archive-Name: <archive-name>`
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `FOLDER` | Path to the folder to upload (required) |
+| `--name`, `-n` | Custom name for the archive (optional) |
 
 ## Exit Codes
 
