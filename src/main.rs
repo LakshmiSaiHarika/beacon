@@ -77,7 +77,10 @@ enum Commands {
 enum Action {
     Boot,
     Report(Report),
-    Upload { folder: PathBuf, name: Option<String> },
+    Upload {
+        folder: PathBuf,
+        name: Option<String>,
+    },
 }
 
 impl TryFrom<Commands> for Action {
@@ -166,7 +169,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return show_dispatch_services().await;
     }
 
-    let command = cli.command.ok_or("No command specified. Use --help for usage information.")?;
+    let command = cli
+        .command
+        .ok_or("No command specified. Use --help for usage information.")?;
     let action: Action = command.try_into()?;
 
     // If URL is provided directly, use it and skip service discovery

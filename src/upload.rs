@@ -21,8 +21,7 @@ pub fn zip_folder(folder: &Path) -> Result<Vec<u8>, std::io::Error> {
         let options = FileOptions::<()>::default().compression_method(CompressionMethod::Deflated);
 
         add_directory_to_zip(&mut zip, folder, folder, options)?;
-        zip.finish()
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        zip.finish().map_err(std::io::Error::other)?;
     }
 
     Ok(buffer.into_inner())
@@ -40,22 +39,25 @@ fn add_directory_to_zip<W: Write + Seek>(
         let path = entry.path();
         let metadata = entry.metadata()?;
 
-        let relative = path.strip_prefix(base).map_err(|e| {
-            std::io::Error::new(std::io::ErrorKind::InvalidInput, e)
-        })?;
+        let relative = path
+            .strip_prefix(base)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
 
         let relative_str = relative.to_str().ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::InvalidInput, "path contains invalid UTF-8")
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "path contains invalid UTF-8",
+            )
         })?;
 
         if metadata.is_dir() {
             // Add directory entry (with trailing slash)
-            zip.add_directory(format!("{}/", relative_str), options.clone())
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-            add_directory_to_zip(zip, base, &path, options.clone())?;
+            zip.add_directory(format!("{}/", relative_str), options)
+                .map_err(std::io::Error::other)?;
+            add_directory_to_zip(zip, base, &path, options)?;
         } else if metadata.is_file() {
-            zip.start_file(relative_str, options.clone())
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+            zip.start_file(relative_str, options)
+                .map_err(std::io::Error::other)?;
 
             let mut file = File::open(&path)?;
             let mut contents = Vec::new();
@@ -112,4 +114,3 @@ pub async fn upload_folder(
         }
     }
 }
-
